@@ -1,0 +1,24 @@
+{
+  "name": "create-express-starter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "cli.js",
+  "files": [
+    "index.js",
+    "template-*",
+    "dist"
+  ],
+  "scripts": {
+    "build": "npx tsc && mv ./dist/index.js ./dist/index.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.8.6",
+    "@types/prompts": "^2.4.9",
+    "picocolors": "^1.1.1",
+    "prompts": "^2.4.2"
+  }
+}
