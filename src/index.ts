@@ -2,6 +2,7 @@ import prompts from "prompts";
 import fs from "node:fs";
 import colors from "picocolors";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 // ************************* Helper functions *************************
 function formatTargetDir(targetDir: string | undefined) {
@@ -36,6 +37,7 @@ function isValidPackageName(projectName: string) {
   );
 }
 
+//@ts-ignore
 function toValidPackageName(projectName: string) {
   return projectName
     .trim()
@@ -43,6 +45,25 @@ function toValidPackageName(projectName: string) {
     .replace(/\s+/g, "-")
     .replace(/^[._]/, "")
     .replace(/[^a-z\d\-~]+/g, "-");
+}
+
+function copyDir(srcDir: string, destDir: string) {
+  fs.mkdirSync(destDir, { recursive: true });
+  for (const file of fs.readdirSync(srcDir)) {
+    const srcFile = path.resolve(srcDir, file);
+    const destFile = path.resolve(destDir, file);
+    copy(srcFile, destFile);
+  }
+}
+
+// copy(src, dist) copys the file/directory from the src path to the dest path
+function copy(src: string, dest: string) {
+  const fileStats = fs.statSync(src);
+  if (fileStats.isDirectory()) {
+    copyDir(src, dest);
+  } else {
+    fs.copyFileSync(src, dest);
+  }
 }
 
 // ************************* Helper functions *************************
@@ -69,6 +90,7 @@ async function init() {
           },
         },
 
+        // checking to overwrite file since prjectname overlaps with a existing directory
         {
           type: () =>
             !fs.existsSync(targetDir) || isEmpty(targetDir) ? null : "select",
@@ -105,12 +127,13 @@ async function init() {
           name: "overwriteChecker",
         },
 
+        // if the project name is invalid then we'll create the directory with the projectname but the package.json will have a different name i.e. package name
         {
           type: () =>
             isValidPackageName(getProjectName(targetDir)) ? null : "text",
           name: "packageName",
           message: "Package Name:",
-          initial: () => toValidPackageName(getProjectName(targetDir)),
+          initial: getProjectName(targetDir),
           validate: (dir) =>
             isValidPackageName(dir) || "Invalid package.json name",
         },
@@ -125,21 +148,50 @@ async function init() {
   } catch (e: any) {
     console.log(e.message);
     return;
-  } finally {
-    console.log(result!);
-    console.log(import.meta.url);
   }
 
   // user's choice from the prompt
   // @ts-ignore
-  const { projectname, overwrite } = result;
+  const { projectname, overwrite, packageName } = result;
 
-  // root where the new project will be created
+  // NOTE: root of the new project will be created
   const root = path.join(process.cwd(), targetDir);
 
   if (overwrite === "yes") {
     emptyExistingDir(root);
+  } else if (!fs.existsSync(root)) {
+    fs.mkdirSync(root, { recursive: true }); // NOTE: when using { recursive: true } option if the path to currentDir is provided the function silently does nothin'
   }
+
+  // determine template (for now just a single template)
+  let template: string = "express-base";
+  // doing ../.. (because the path considers index.mjs file as a directory) for e.g. create-express-starter/dist/index.mjs note /index.mjs
+  const templateDir = path.resolve(
+    fileURLToPath(import.meta.url),
+    "../..",
+    `template-${template}`,
+  );
+
+  // looping thorugh the template dir and copying the files to new-project dir
+  const files = fs.readdirSync(templateDir);
+  for (const file of files) {
+    if (file === "package.json") {
+      continue;
+    }
+    copy(path.join(templateDir, file), path.join(root, file));
+  }
+
+  const pkgJSON = JSON.parse(
+    fs.readFileSync(path.join(templateDir, "package.json"), {
+      encoding: "utf8",
+    }),
+  );
+  pkgJSON.name = packageName || getProjectName(targetDir);
+
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify(pkgJSON, null, 2), // the third argument 2 is for indent/spacing
+  );
 }
 
 init().catch((e) => {
