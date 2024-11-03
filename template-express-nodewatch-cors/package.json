@@ -1,0 +1,17 @@
+{
+  "name": "template-express-base",
+  "version": "0.0.1",
+  "description": "A simple express project created using create-express-starter",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch-path=./ index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.1"
+  }
+}

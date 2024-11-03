@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 // ************************* Helper functions *************************
+
 function formatTargetDir(targetDir: string | undefined) {
   return targetDir?.trim().replace(/\/+$/g, "");
 }
@@ -68,16 +69,30 @@ function copy(src: string, dest: string) {
 
 // ************************* Helper functions *************************
 
-const { red } = colors;
+// **************************** Constants/enums ****************************
+
+const { red, greenBright, yellow } = colors;
 const defaultTargetDir = "express-project";
+
+enum Template {
+  Express_Nodewatch = "express-nodewatch",
+  Express_Nodewatch_Cors = "express-nodewatch-cors",
+  Express_Nodemon = "express-nodemon",
+  Express_Nodemon_Cors = "express-nodemon-cors",
+}
+
+// **************************** Constants/enums ****************************
 
 async function init() {
   const argTargetDir = formatTargetDir(process.argv.slice(2)[0]);
   let targetDir = argTargetDir || defaultTargetDir;
 
-  let result: prompts.Answers<"projectName" | "overwrite" | "packageName">;
+  let result: prompts.Answers<
+    "projectName" | "overwrite" | "packageName" | "hotReloading" | "enableCors"
+  >;
 
   try {
+    console.log("Welcome to express.js project starter 🚅");
     result = await prompts(
       [
         {
@@ -137,6 +152,27 @@ async function init() {
           validate: (dir) =>
             isValidPackageName(dir) || "Invalid package.json name",
         },
+
+        {
+          type: "select",
+          name: "hotReloading",
+          message: "Pick what to use server auto-restart on change",
+          choices: [
+            { title: `${greenBright("Nodemon")}`, value: "nodemon" },
+            {
+              title: `${yellow("Node --watch flag (experimental)")}`,
+              value: "nodewatch",
+            },
+            { title: `${red("none")}`, value: "none" },
+          ],
+        },
+
+        {
+          type: "toggle",
+          name: "enableCors",
+          message: "Enable cors?",
+          initial: true,
+        },
       ],
 
       {
@@ -151,8 +187,9 @@ async function init() {
   }
 
   // user's choice from the prompt
+  // prettier-ignore
   // @ts-ignore
-  const { projectname, overwrite, packageName } = result;
+  const { projectname, overwrite, packageName, hotReloading, enableCors } = result;
 
   // NOTE: root of the new project will be created
   const root = path.join(process.cwd(), targetDir);
@@ -163,8 +200,21 @@ async function init() {
     fs.mkdirSync(root, { recursive: true }); // NOTE: when using { recursive: true } option if the path to currentDir is provided the function silently does nothin'
   }
 
-  // determine template (for now just a single template)
-  let template: string = "express-base";
+  // determine template (default express-base)
+  let template: Template = Template.Express_Nodewatch;
+  // NOTE: even for none notewatch template is selected (since the only difference is the package.json run script that is overwritten later)
+  if (hotReloading === "nodewatch" || hotReloading === "none") {
+    if (enableCors) {
+      template = Template.Express_Nodewatch_Cors;
+    }
+  } else if (hotReloading === "nodemon") {
+    if (enableCors) {
+      template = Template.Express_Nodemon_Cors;
+    } else {
+      template = Template.Express_Nodemon;
+    }
+  }
+
   // doing ../.. (because the path considers index.mjs file as a directory) for e.g. create-express-starter/dist/index.mjs note /index.mjs
   const templateDir = path.resolve(
     fileURLToPath(import.meta.url),
@@ -187,11 +237,24 @@ async function init() {
     }),
   );
   pkgJSON.name = packageName || getProjectName(targetDir);
+  if (hotReloading === "none") {
+    pkgJSON.scripts.dev = "node index.js";
+  }
 
   fs.writeFileSync(
     path.join(root, "package.json"),
     JSON.stringify(pkgJSON, null, 2), // the third argument 2 is for indent/spacing
   );
+
+  const cdProjectName = path.relative(process.cwd(), root);
+  console.log("\nFinished setting up your express project 🚀. Now run:\n");
+  if (process.cwd() !== root) {
+    console.log(
+      `  cd ${cdProjectName.includes(" ") ? `"${cdProjectName}"` : cdProjectName}`,
+    );
+  }
+  console.log("  npm install");
+  console.log("  npm run dev");
 }
 
 init().catch((e) => {

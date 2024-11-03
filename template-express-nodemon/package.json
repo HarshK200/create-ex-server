@@ -1,0 +1,17 @@
+{
+  "name": "template-express-base",
+  "version": "0.0.1",
+  "description": "A simple express project created using create-express-starter",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.1",
+    "nodemon": "^3.1.7"
+  }
+}
