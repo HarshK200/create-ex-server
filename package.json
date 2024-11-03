@@ -1,8 +1,11 @@
 {
-  "name": "create-express-starter",
+  "name": "create-ex-server",
   "version": "1.0.0",
-  "description": "",
-  "main": "cli.js",
+  "description": "A simple light and fast cli tool to bootstrap a express.js project",
+  "type": "module",
+  "bin": {
+    "create-ex-server": "bin/index.js"
+  },
   "files": [
     "index.js",
     "template-*",
@@ -12,9 +15,13 @@
     "build": "npx tsc && mv ./dist/index.js ./dist/index.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/harshk200/create-express-starter"
+  },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Harsh Kapadia",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "^22.8.6",
     "@types/prompts": "^2.4.9",
