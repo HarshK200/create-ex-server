@@ -247,7 +247,7 @@ async function init() {
   );
 
   const cdProjectName = path.relative(process.cwd(), root);
-  console.log("\nFinished setting up your express project 🚀. Now run:\n");
+  console.log("\nFinished setting up your express project 🚀. Now run:");
   if (process.cwd() !== root) {
     console.log(
       `  cd ${cdProjectName.includes(" ") ? `"${cdProjectName}"` : cdProjectName}`,
