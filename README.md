@@ -1,3 +1,5 @@
+![2024-11-0317-52-09-ezgif com-speed](https://github.com/user-attachments/assets/8db793c4-36ed-4f55-86cb-b96e56c3c1c1)
+
 # ABOUT
 This is a simple, light-weight cli tool to bootstrap a Express.js server. (Highly inspired by [vite](https://vite.dev))
 
